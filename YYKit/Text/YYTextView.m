@@ -3305,8 +3305,19 @@ typedef NS_ENUM(NSUInteger, YYTextMoveDirection) {
     if (!markedText) markedText = @"";
     if (_markedTextRange == nil) {
         _markedTextRange = [YYTextRange rangeWithRange:NSMakeRange(_selectedTextRange.end.offset, markedText.length)];
-        [_innerText replaceCharactersInRange:NSMakeRange(_selectedTextRange.end.offset, 0) withString:markedText];
-        _selectedTextRange = [YYTextRange rangeWithRange:NSMakeRange(_selectedTextRange.start.offset + selectedRange.location, selectedRange.length)];
+        
+        
+        if (_innerText.length > _selectedTextRange.end.offset)
+        {
+            [_innerText replaceCharactersInRange:NSMakeRange(_selectedTextRange.end.offset, 0) withString:markedText];
+            _selectedTextRange = [YYTextRange rangeWithRange:NSMakeRange(_selectedTextRange.start.offset + selectedRange.location, selectedRange.length)];
+        } else {
+            [_innerText replaceCharactersInRange:NSMakeRange(MAX(_innerText.length, 0), 0) withString:markedText];
+            _selectedTextRange = [YYTextRange rangeWithRange:NSMakeRange(MAX(_innerText.length, 0) + selectedRange.location, selectedRange.length)];
+        }
+        
+//        [_innerText replaceCharactersInRange:NSMakeRange(_selectedTextRange.end.offset, 0) withString:markedText];
+//        _selectedTextRange = [YYTextRange rangeWithRange:NSMakeRange(_selectedTextRange.start.offset + selectedRange.location, selectedRange.length)];
     } else {
         _markedTextRange = [self _correctedTextRange:_markedTextRange];
         [_innerText replaceCharactersInRange:_markedTextRange.asRange withString:markedText];
@@ -3624,15 +3635,29 @@ typedef NS_ENUM(NSUInteger, YYTextMoveDirection) {
     if (!position) return nil;
     if (_innerText.length == 0) return _typingAttributesHolder.attributes;
     NSDictionary *attrs = nil;
-    if (0 <= position.offset  && position.offset <= _innerText.length) {
+    if (0 <= position.offset && position.offset <= _innerText.length) {
         NSUInteger ofs = position.offset;
-        if (position.offset == _innerText.length ||
-            direction == UITextStorageDirectionBackward) {
-             ofs--;
+        if ((position.offset == _innerText.length ||
+             direction == UITextStorageDirectionBackward) && ofs > 0) {
+            ofs--;
         }
         attrs = [_innerText attributesAtIndex:ofs effectiveRange:NULL];
     }
     return attrs;
+    /*
+     if (!position) return nil;
+     if (_innerText.length == 0) return _typingAttributesHolder.attributes;
+     NSDictionary *attrs = nil;
+     if (0 <= position.offset  && position.offset <= _innerText.length) {
+     NSUInteger ofs = position.offset;
+     if (position.offset == _innerText.length ||
+     direction == UITextStorageDirectionBackward) {
+     ofs--;
+     }
+     attrs = [_innerText attributesAtIndex:ofs effectiveRange:NULL];
+     }
+     return attrs;
+     */
 }
 
 - (YYTextPosition *)positionWithinRange:(YYTextRange *)range atCharacterOffset:(NSInteger)offset {
